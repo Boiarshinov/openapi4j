@@ -1,0 +1,21 @@
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+  id 'signing'
+}
+
+description = "openapi4j operation OkHttp adapter"
+
+dependencies {
+  api(project(":openapi-operation-validator"))
+
+  implementation("com.squareup.okhttp3:okhttp:4.10.0")
+
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+}
+
+test {
+  useJUnitPlatform()
+}
+
+apply from: "../../publish.gradle"

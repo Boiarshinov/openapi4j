@@ -1,0 +1,5307 @@
+openapi: 3.0.1
+info:
+  title: СБП API для Участников СБП и Агентов ТСП
+  version: '1.0'
+servers:
+  - url: /
+tags:
+  - name: MerchantApi
+    x-displayName: MerchantApi
+  - name: PaymentApi
+    x-displayName: PaymentApi
+  - name: OperationApi
+    x-displayName: OperationApi
+  - name: LegalEntity
+    description: |
+      Методы API для регистрации в СБП Юридических лиц, Индивидуальных предпринимателей или самозанятых. <span style="color:red;">Доступны только по сертификатам Агентов ТСП.</span>
+
+      Регистрация Юридических лиц (далее – ЮЛ), индивидуальных предпринимателей (далее - ИП) или самозанятых в ОПКЦ СБП состоит из двух последовательных запросов.
+      * Регистрация ЮЛ или ИП начинается с запроса метода \"Регистрация ЮЛ или ИП\". Регистрация самозанятого начинается с запроса метода \"Регистрация самозанятого"\. В испольуемых методах Агент ТСП передает информацию о ЮЛ,
+      ИП или о самозанятом соответственно. Если структура запроса корректная, ответ содержит Временный регистрационный номер в поле ticketId.
+      * Метод \"Запрос статуса регистрации ЮЛ, ИП или самозанятого\" позволяет получить статус регистрации ЮЛ, ИП или самозанятого по ранее выданному Временному
+      регистрационному номеру. Ответ содержит статус регистрации ЮЛ, ИП и самозанятого и информацию о ЮЛ и ИП, если структура запроса корректная и
+      данные ЮЛ или ИП, включая идентификатор ЮЛ или ИП, обновлены в ОПКЦ СБП к моменту получения запроса.
+      В дальнейшем для зарегистрированного ЮЛ, ИП или самозанятого можно получить его реквизиты, сделав запрос метода \"Запрос данных ЮЛ, ИП или самозанятого\"
+      по его идентификатору.
+    x-displayName: Управление юридическими лицами
+  - name: LegalAccount
+    description: |
+      Метод \"Регистрация счета юридического лица\" с 1 ноября 2020 года упраздняется. Метод могут продолжать использовать Агенты ТСП, реализовавшие его до 1 ноября 2020 года, но контроля данных на стороне ОПКЦ СБП не проводится. <span style="color:red;">Доступны только по сертификатам Агентов ТСП.</span>
+    x-displayName: Управление расчетными счетами юридических лиц
+  - name: Merchant
+    description: |
+      Методы API для регистрации в СБП ТСП. <span style="color:red;">Доступны только по сертификатам Агентов ТСП.</span>
+    x-displayName: Управление ТСП
+  - name: QRCData
+    description: |
+      Методы API, предназначенные для работы с Платежными или Информационными ссылками СБП. <span style="color:red;">Доступны только по сертификатам Агентов ТСП.</span>
+    x-displayName: Операции с Функциональными ссылками СБП для Агентов ТСП
+  - name: OPKCQRCData
+    description: |
+      В случае реализации данных методов API на стороне Агента ТСП, ОПКЦ СБП будет направлять уведомления такому Агенту ТСП. <span style="color:red;">Доступны только по сертификатам Агентов ТСП.</span>
+    x-displayName: Уведомления для Агентов ТСП
+  - name: QRCDataForBank
+    description: |
+      Методы API для запроса или предоставления информации по Платежным и Информационным ссылкам СБП. <span style="color:red;">Доступны только по сертификатам Участников СБП.</span>
+    x-displayName: Операции с Функциональными ссылками СБП для Участников СБП
+  - name: TransactionData
+    description: |
+      Методы API для получения информации об Операциях СБП. <span style="color:red;">Доступны по сертификату Участника СБП.</span>
+    x-displayName: Методы для работы с Операциями СБП
+security: []
+paths:
+  /merchant/v1/legal-entity:
+    post:
+      tags:
+        - LegalEntity
+      summary: Регистрация ЮЛ или ИП
+      operationId: createLegalEntity
+      requestBody:
+        description: Данные регистрируемого ЮЛ или ИП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalEntityDto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalEntityResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403ResultData'
+      x-codegen-request-body-name: LegalEntityDto
+  /merchant/v1/legal-entity/{legalId}:
+    patch:
+      tags:
+        - LegalEntity
+      summary: Управление параметрами Клиента – ЮЛ или ИП
+      description: |
+        <span style="color:red;">Доступен Участникам СБП по сертификатам Агента ТСП.</span>
+      operationId: updateLegalData
+      parameters:
+        - name: legalId
+          in: path
+          required: true
+          schema:
+            maxLength: 12
+            minLength: 12
+            type: string
+            nullable: false
+            description: Идентификатор зарегистрированного ЮЛ или ИП в СБП
+            example: LF0000000001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLegalParameters'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalDataResultOk2'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+  /merchant/v1/legal-entity/self-employee:
+    post:
+      tags:
+        - LegalEntity
+      summary: Регистрация самозанятого
+      operationId: createSelfEmployee
+      requestBody:
+        description: Данные регистрируемого самозанятого лица
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfEmployeeRegistrationRequestDto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalEntityResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403ResultData'
+      x-codegen-request-body-name: SelfEmployeeRegistrationRequestDto
+  /merchant/v1/legal-entity/registration/{ticketId}:
+    get:
+      tags:
+        - LegalEntity
+      summary: Запрос статуса регистрации ЮЛ, ИП или самозанятого (v1)
+      operationId: getStatusLegalEntity
+      parameters:
+        - name: ticketId
+          in: path
+          description: Временный регистрационный номер
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalTicketResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalTicketResultBad'
+  /merchant/v2/legal-entity/registration/{ticketId}:
+    get:
+      tags:
+        - LegalEntity
+      summary: Запрос статуса регистрации ЮЛ, ИП  или самозанятого (v2)
+      operationId: getStatusLegalEntityV2
+      parameters:
+        - name: ticketId
+          in: path
+          description: Временный регистрационный номер
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalTicketResultOkV2'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalTicketResultBad'
+  /merchant/v1/legal-entity/info/{legalId}:
+    get:
+      tags:
+        - LegalEntity
+      summary: Запрос данных ЮЛ, ИП или самозанятого
+      description: |
+        <span style="color:red;">Доступен по сертификатам Агента ТСП.</span>
+      operationId: getLegalData
+      parameters:
+        - name: legalId
+          in: path
+          description: Идентификатор ЮЛ, ИП или самозанятого в СБП
+          required: true
+          schema:
+            maxLength: 12
+            minLength: 12
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalDataResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+  /merchant/v1/legal-account:
+    post:
+      tags:
+        - LegalAccount
+      summary: Регистрация расчетного счета ЮЛ или ИП
+      description: <span style="color:red;">Метод выведен из эксплуатации</span>
+      operationId: createLegalAccount
+      requestBody:
+        description: Данные регистрируемого банковского счета ЮЛ или ИП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalAccountDto'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalAccountResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+        '422':
+          description: Некорректное значение параметра запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalAccountResultBad'
+      x-codegen-request-body-name: LegalAccountDto
+  /merchant/v1/merchant:
+    post:
+      tags:
+        - Merchant
+      summary: Регистрация ТСП
+      operationId: createMerchant
+      requestBody:
+        description: Данные регистрируемого ТСП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantDto'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantResultOk'
+        '400':
+          description: Некрректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05001'
+        '422':
+          description: Некорректное значение параметра запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantResultBad'
+      x-codegen-request-body-name: merchantDto
+  /merchant/v1/merchant/info/{merchantId}:
+    get:
+      tags:
+        - Merchant
+      summary: Запрос данных ТСП
+      description: |
+        <span style="color:red;">Доступен по сертификатам Агента ТСП.</span>
+      operationId: getMerchantData
+      parameters:
+        - name: merchantId
+          in: path
+          description: Идентификатор ТСП в СБП
+          required: true
+          schema:
+            maxLength: 12
+            minLength: 12
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantDataResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+  /merchant/v1/merchant/search:
+    get:
+      tags:
+        - Merchant
+      summary: Получение списка ТСП, зарегистрированных для ЮЛ или ИП
+      description: |
+        <span style="color:red;">Доступен по сертификатам Агента ТСП.</span>
+      operationId: searchMerchantData
+      parameters:
+        - name: ogrn
+          in: query
+          description: ОГРН ЮЛ или ИП
+          required: true
+          schema:
+            maxLength: 15
+            minLength: 13
+            type: string
+        - name: bic
+          in: query
+          description: БИК банка-участника, в котором проводятся расчеты по операциям ТСП
+          required: true
+          schema:
+            maxLength: 9
+            minLength: 9
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantsByLegalDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM03005'
+  /payment/v1/qrc-data:
+    post:
+      tags:
+        - QRCData
+      summary: Регистрация Функциональной ссылки СБП
+      operationId: createQRC
+      parameters:
+        - name: mediaType
+          in: query
+          description: Опциональное получение QR-кода для Функциональной ссылки СБП
+          required: false
+          schema:
+            type: string
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      requestBody:
+        description: Данные регистрируемой Платежной или Информационной ссылки СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QrcDataDto'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qrcDataResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+      x-codegen-request-body-name: qrcDataDto
+  /v01/transaction/search:
+    get:
+      tags:
+        - TransactionData
+      summary: Запрос идентификатора Операции СБП
+      description: |
+        Метод должен использоваться Участником СБП в роли банка Плательщика перед формированием запроса статуса Операции СБП (Сообщения СБП x11) при отсутствии у него данных о номере Операции СБП в результате неполучения ответа на <u>первое</u> Сообщение СБП от ОПКЦ СБП за установленное время. <span style="color:red;">Метод доступен по сертификату Участника СБП.</span>
+      operationId: searchTrxId
+      parameters:
+        - name: msg-num
+          in: query
+          description: 'Уникальный Номер Сообщения от Банка Плательщика (ЭБД 79). Применим для Сообщений СБП: C01, B05, D01, G05, M05.'
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            text/plain:
+              schema:
+                type: string
+                minLength: 32
+                maxLength: 32
+                description: Идентификатор Операции СБП (ЭБД 27)
+              example: A12930013057370100000546241820D7
+        '404':
+          description: Ресурс не найден
+  /payment/v1/b2b/payment-link/one-time-use:
+    post:
+      tags:
+        - QRCData
+      summary: Регистрация одноразовой Функциональной ссылки СБП для B2B
+      operationId: createAndGetOneTimePaymentLinkPayloadForB2B
+      parameters:
+        - name: mediaType
+          in: query
+          description: Опциональное получение QR-кода для Функциональной ссылки СБП
+          required: false
+          schema:
+            type: string
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      requestBody:
+        description: Данные регистрируемой одноразовой Фукциональной ссылки СБП для B2B
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OneTimeUsePaymentLinkB2BDto'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OneTimeUsePaymentLinkB2BResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+      x-codegen-request-body-name: OneTimeUsePaymentLinkB2BDto
+  /payment/v1/b2b/payment-link/reusable:
+    post:
+      tags:
+        - QRCData
+      summary: Регистрация многоразовой Функциональной ссылки СБП для B2B
+      operationId: createAndGetReusablePaymentLinkPayloadForB2B
+      parameters:
+        - name: mediaType
+          in: query
+          description: Опциональное получение QR-кода для Функциональной ссылки СБП
+          required: false
+          schema:
+            type: string
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      requestBody:
+        description: Данные регистрируемой многоразовой Фукциональной ссылки СБП для B2B
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReusablePaymentLinkB2BDto'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReusablePaymentLinkB2BResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+      x-codegen-request-body-name: ReusablePaymentLinkB2BDto
+  /payment/v1/qrc-data/{qrcId}/payload:
+    get:
+      tags:
+        - QRCData
+      summary: Запрос содержимого для ранее зарегистрированной Функциональной ссылки СБП
+      operationId: getQRCPayload
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+        - name: mediaType
+          in: query
+          description: Опциональное получение QR-кода
+          schema:
+            type: string
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qrcPayloadResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+  /payment/v1/qrc-data/{qrcId}/image:
+    get:
+      tags:
+        - QRCData
+      summary: Запрос QR-кода по ранее зарегистрированной Функциональной ссылке СБП
+      operationId: getQRCImage
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+        - name: Accept
+          in: header
+          required: true
+          schema:
+            type: string
+            default: image/png
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+            image/png:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+  /payment/v1/qrc-status:
+    put:
+      tags:
+        - QRCData
+      summary: Запрос статуса Операций СБП по идентификатору QR Dynamic (v1)
+      operationId: getStatusQRCOperations
+      requestBody:
+        description: qrcId по которым необходимо получить статусы операций
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/qrcStatusDto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qrcStatusResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+      x-codegen-request-body-name: qrcStatusDto
+  /payment/v2/qrc-status:
+    put:
+      tags:
+        - QRCData
+      summary: Запрос статуса Операций СБП по идентификатору QR Dynamic (v2)
+      operationId: getStatusQRCOperationsV2
+      requestBody:
+        description: qrcId по которым необходимо получить статусы операций
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/qrcStatusDtoV2'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qrcStatusV2ResultOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+      x-codegen-request-body-name: qrcStatusDto
+  /payment/v1/cash-register-qrc:
+    post:
+      tags:
+        - QRCData
+      summary: Регистрация Кассовой ссылки СБП
+      description: Запрос на создание Кассовой ссылки СБП, поддерживающей логику работы с Корзинами клиента
+      operationId: createCashRegisterQr
+      parameters:
+        - name: mediaType
+          in: query
+          description: Опциональное получение QR-кода для Кассовой ссылки СБП
+          required: false
+          schema:
+            type: string
+            enum:
+              - image/png
+              - image/svg+xml
+        - $ref: '#/components/parameters/width'
+        - $ref: '#/components/parameters/height'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashRegQrRequest'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDtoQrcPayloadDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+      x-codegen-request-body-name: qrcDataDto
+  /payment/v1/cash-register-qrc/{qrcId}/params:
+    post:
+      tags:
+        - QRCData
+      summary: Активация Кассовой ссылки СБП
+      description: Запрос на активацию Кассовой ссылки СБП для выполнения платежа
+      operationId: createParams
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddActiveParams'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDtoActiveParamsResponse'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+    delete:
+      tags:
+        - QRCData
+      summary: Деактивация Кассовой ссылки СБП
+      operationId: deleteParams
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ на "Деактивация Кассовой ссылки СБП"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCashRegisterQrcOk'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+  /payment/v1/cash-register-qrc/{qrcId}:
+    put:
+      tags:
+        - QRCData
+      summary: Изменение счета ЮЛ, ИП или самозанятого для зарегистрированной Кассовой ссылки СБП
+      operationId: setNewAccount
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+            example: AS10001K6S85322B9E4P7I518N8LNEUT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCashRegisterQrRequest'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashRegisterQrUpdateAccount200Ok'
+        '400':
+          description: Неправильный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+  /payment/v1/petition/{qrcId}:
+    post:
+      tags:
+        - QRCData
+      summary: Запрос в ОПКЦ СБП на оплату с привязанного счета Плательщика от Агента ТСП
+      operationId: createPaymentPetition
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Платежной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentPetitionDto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessfulResponse200'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+      x-codegen-request-body-name: PaymentPetitionDto
+  /payment/v1/agent/refund/{trxId}:
+    post:
+      tags:
+        - QRCData
+      summary: Запрос Агента ТСП на возврат по Операции СБП C2B
+      operationId: createRefundRequest
+      parameters:
+        - name: trxId
+          in: path
+          description: Идентификатор исходной Операции СБП C2B
+          required: true
+          schema:
+            maxLength: 32
+            minLength: 32
+            type: string
+          example: A12930013057370100000546241820D7
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundCreationBody'
+        required: true
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCreationResponseDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRM05015'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403ResultData'
+  /payment/v1/qrc/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о финальном статусе Операции СБП C2B (v1)
+      operationId: sendFinalStatusAck
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о финальном статусе Операции СБП C2B от ОПКЦ СБП (v1)
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/C2BNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: C2BNotificationV1Dto
+  /payment/v2/qrc/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о финальном статусе Операции СБП C2B (v2)
+      operationId: sendFinalStatusAckV2
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о финальном статусе Операции СБП C2B от ОПКЦ СБП (v2)
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/C2BNotificationV2Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: C2BNotificationV2Dto
+  /payment/v1/b2c-refund/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о финальном статусе Операции СБП B2C
+      operationId: sendFinalStatusB2CAck
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о финальном статусе Операции СБП B2C по Сценарию "Возврат по Операции СБП C2B".
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/B2CNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: B2CNotificationV1Dto
+  /payment/v1/refund/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о результате обработки запроса на возврат
+      operationId: refundResolution
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о результате обработки запроса на возврат от ОПКЦ СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRefundResolutionV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: NotificationRefundResolutionV1Dto
+  /payment/v1/subscription/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о результате выполнения привязки счета Плательщика от ОПКЦ СБП
+      operationId: sendSubscribtionResult
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о результате выполнения привязки счета Плательщика от ОПКЦ СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationSubscriptionV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: NotificationSubscriptionV1Dto
+  /payment/v1/resolution/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о решении об оплате с привязанного счета Плательщика от ОПКЦ СБП
+      operationId: resolutionForPaymentBySubscribtion
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о решении об оплате с привязанного счета Плательщика от ОПКЦ СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationResolutionV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: NotificationResolutionV1Dto
+  /payment/v1/b2b/notification:
+    post:
+      tags:
+        - OPKCQRCData
+      summary: Уведомление для Агента ТСП о финальном статусе Операции СБП B2B
+      operationId: sendFinalStatusB2BAck
+      requestBody:
+        description: Данные Уведомления для Агента ТСП о финальном статусе Операции СБП B2B.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/B2BNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: B2BNotificationV1Dto
+  /payment/v1/paymentdata/{qrcId}:
+    get:
+      tags:
+        - QRCDataForBank
+      summary: Запрос данных Функциональной ссылки СБП (v1)
+      operationId: getQRCAndMerchantData
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseV1V2Dto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v2/paymentdata/{qrcId}:
+    get:
+      tags:
+        - QRCDataForBank
+      summary: Запрос данных Функциональной ссылки СБП (v2)
+      description: <span style="color:red;">Метод выведен из эксплуатации</span>
+      operationId: getQRCAndMerchantDataV2
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PaymentResponseV1V2Dto'
+                  - $ref: '#/components/schemas/SubscriptionResponseV2Dto'
+                  - $ref: '#/components/schemas/PaymentWithSubscriptionResponseV2Dto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v3/paymentdata/{qrcId}:
+    get:
+      tags:
+        - QRCDataForBank
+      summary: Запрос данных Функциональной ссылки СБП (v3)
+      operationId: getQRCAndMerchantDataV3
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PaymentResponseV3Dto'
+                  - $ref: '#/components/schemas/SubscriptionResponseV3Dto'
+                  - $ref: '#/components/schemas/PaymentWithSubscriptionResponseV3Dto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v4/paymentdata/{qrcId}:
+    get:
+      tags:
+        - QRCDataForBank
+      summary: Запрос данных Функциональной ссылки СБП (v4)
+      operationId: getQRCAndMerchantDataV4
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PaymentResponseV4Dto'
+                  - $ref: '#/components/schemas/SubscriptionResponseV4Dto'
+                  - $ref: '#/components/schemas/PaymentWithSubscriptionResponseV4Dto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v1/b2b/payment-link/{qrcId}:
+    get:
+      tags:
+        - QRCDataForBank
+      summary: Запрос данных Функциональной ссылки СБП для B2B
+      operationId: getPaymentLinkInfoForB2B
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/B2BPaymentLinkResponseV1Dto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v1/petition:
+    post:
+      tags:
+        - QRCDataForBank
+      summary: Запрос в Банк Плательщика на оплату с привязанного счета Плательщика от ОПКЦ СБП
+      operationId: requestForPaymentBySubscribtion
+      requestBody:
+        description: Запрос в Банк Плательщика на оплату с привязанного счета Плательщика от ОПКЦ СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestForResolutionV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Уведомление получено)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: RequestForResolutionV1Dto
+  /payment/v1/paymentdata/subscription/{qrcId}:
+    patch:
+      tags:
+        - QRCDataForBank
+      summary: Уведомление для ОПКЦ СБП о результате выполнения привязки счета Плательщика от Банка Плательщика
+      operationId: sendSubscribtionDto
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Функциональной ссылки СБП
+          required: true
+          schema:
+            minLength: 32
+            maxLength: 32
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionResultNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralResponseDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ05014'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403ResultData'
+      x-codegen-request-body-name: SubscriptionResultNotificationV1Dto
+  /payment/v1/petition/{qrcId}/resolution:
+    post:
+      tags:
+        - QRCDataForBank
+      summary: Уведомление для ОПКЦ СБП о решении об оплате с привязанного счета Плательщика от Банка Плательщика
+      operationId: registerResolution
+      parameters:
+        - name: qrcId
+          in: path
+          description: Идентификатор зарегистрированной Платежной ссылки СБП
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+      requestBody:
+        description: Разрешение
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionPaymantResolutionNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessfulResponse200'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralResponseDto'
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401ResultData'
+  /payment/v1/agent/refund:
+    post:
+      tags:
+        - QRCDataForBank
+      summary: Запрос в Банк Плательщика на возврат по Операции СБП C2B
+      operationId: refundRequest
+      requestBody:
+        description: Запрос в Банк Плательщика на возврат по Операции СБП C2B от ОПКЦ СБП
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/C2BRefundRequestV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ (Запрос получен)
+          content: {}
+        '500':
+          description: Внутренняя ошибка
+          content: {}
+      x-codegen-request-body-name: C2BRefundRequestV1Dto
+  /payment/v1/agent/refund/{trxId}/{opkcRefundRequestId}:
+    get:
+      tags:
+        - QRCData
+      summary: Статус запроса на возврат средств для Агента ТСП
+      operationId: refundRequestStatus
+      parameters:
+        - name: trxId
+          in: path
+          description: Идентификатор исходной Операции СБП C2B
+          required: true
+          schema:
+            maxLength: 32
+            minLength: 32
+            type: string
+          example: A12930013057370100000546241820D7
+        - name: opkcRefundRequestId
+          in: path
+          description: Уникальный идентификатор запроса на возврат, назначенный ОПКЦ СБП
+          required: true
+          schema:
+            maxLength: 32
+            minLength: 32
+            type: string
+          example: A003610425360300b4ubOp6511E4565
+      responses:
+        '200':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundStatusResponseDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralResponseDto'
+    patch:
+      tags:
+        - QRCDataForBank
+      summary: Уведомление о результате обработки запроса на возврат от Банка Плательщика
+      operationId: confirmRefundRequest
+      parameters:
+        - name: trxId
+          in: path
+          description: Идентификатор исходной Операции СБП C2B
+          required: true
+          schema:
+            maxLength: 32
+            minLength: 32
+            type: string
+          example: A12930013057370100000546241820D7
+        - name: opkcRefundRequestId
+          in: path
+          description: Уникальный идентификатор запроса на возврат, назначенный ОПКЦ СБП
+          required: true
+          schema:
+            maxLength: 32
+            minLength: 32
+            type: string
+          example: A003610425360300b4ubOp6511E4565
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundResultNotificationV1Dto'
+        required: true
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessfulResponse200'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralResponseDto'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403ResultData'
+  /payment/v1/qrc-id-reservation:
+    post:
+      tags:
+        - QRCData
+      summary: Получение идентификаторов для многоразовых ссылок СБП
+      description: Запрос на получение массива идентификаторов многоразовых ссылок СБП для последующей регистрации ссылки с заданным идентификатором.
+      operationId: createQrcIdReservationV1
+      parameters:
+        - name: quantity
+          in: query
+          description: Количество идентификаторов для генерации
+          required: true
+          schema:
+            maximum: 10000
+            minimum: 1
+            type: integer
+      responses:
+        '201':
+          description: Операция успешно выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseQrcReservationDto'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400ResultDataRQ07999'
+components:
+  parameters:
+    width:
+      name: width
+      in: query
+      description: Ширина изображения
+      schema:
+        maximum: 1000
+        minimum: 200
+        type: integer
+        default: 300
+    height:
+      name: height
+      in: query
+      description: Высота изображения
+      schema:
+        maximum: 1000
+        minimum: 200
+        type: integer
+        default: 300
+  schemas:
+    OneTimeUsePaymentLinkB2BDto:
+      title: Данные метода "Регистрация одноразовой Функциональной ссылки СБП для B2B"
+      required:
+        - agentId
+        - memberId
+        - account
+        - merchantId
+        - amount
+        - paymentPurpose
+        - takeTax
+      type: object
+      properties:
+        agentId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        memberId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        account:
+          type: string
+          maxLength: 20
+          minLength: 20
+          description: Банковский счет ЮЛ или ИП
+          example: '40702810100010000001'
+        merchantId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор ТСП
+          example: MF0000000001
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Валюта Операции СБП - рубли РФ.
+          example: '100000'
+        qrTtl:
+          type: integer
+          maxLength: 6
+          minLength: 1
+          nullable: true
+          description: |
+            Срок жизни Функциональной ссылки СБП B2B в минутах. Минимальное допустимое значение - "1". Максимальное допустимое значение - "129 600" (90 дней). Если поле "qrTtl" не передано в запросе, будет использовано значение по умолчанию - "4 320" минут (3 суток).
+          example: '60'
+        paymentPurpose:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+          example: оплата по договору №123456789 от 01.09.2001
+        fraudScore:
+          type: string
+          maxLength: 16
+          minLength: 16
+          nullable: true
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        redirectUrl:
+          type: string
+          maxLength: 1024
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        takeTax:
+          type: boolean
+          description: |
+            Информация о взимании НДС. Допустимые значения:
+               * true – облагается НДС;
+               * false – не облагается НДС;
+          enum:
+            - true
+            - false
+          example: true
+        totalTaxAmount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+          description: |
+            Сумма НДС в копейках. Валюта НДС - рубли РФ.
+            Условия заполнения в зависимости от значения поля takeTax:
+              * totalTaxAmount всегда отсутствует при takeTax=FALSE;
+              * totalTaxAmount всегда присутствует при takeTax=TRUE (при этом ЭБД 297 всегда отсутствует в сообщении M05);
+          example: '0'
+        uip:
+          type: string
+          maxLength: 35
+          minLength: 1
+          nullable: true
+          description: Уникальный Идентификатор Платежа, назначаемый Получателем
+          example: 281000670LSS7DN18SJQDNP4B05KLJL2
+    OneTimeUsePaymentLinkB2BResultOk:
+      title: Успешный ответ на запрос метода "Регистрация одноразовой Функциональной ссылки СБП для B2B"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 7
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          type: string
+          maxLength: 255
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          required:
+            - qrcId
+            - payload
+            - status
+          type: object
+          properties:
+            qrcId:
+              type: string
+              maxLength: 32
+              description: Идентификатор зарегистрированной Функциональной СБП для B2B
+              example: AO1000670LSS7DN18SJQDNP4B05KLJL2
+            payload:
+              type: string
+              maxLength: 999
+              description: Payload зарегистрированной Платежной или Информационной ссылки СБП
+              example: https://b2b.cbrpay.ru/AO1000670LSS7DN18SJQDNP4B05KLJL2
+            status:
+              type: string
+              description: Статус регистрации Платежной или Информационной ссылки СБП
+              example: CREATED
+              enum:
+                - CREATED
+            image:
+              $ref: '#/components/schemas/imageDataDto'
+    ReusablePaymentLinkB2BDto:
+      title: Данные метода "Регистрация многоразовой Функциональной ссылки СБП для B2B"
+      required:
+        - agentId
+        - memberId
+        - account
+        - merchantId
+        - takeTax
+      type: object
+      properties:
+        agentId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        memberId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        account:
+          type: string
+          maxLength: 20
+          minLength: 20
+          description: Банковский счет ЮЛ или ИП
+          example: '40702810100010000001'
+        merchantId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор ТСП
+          example: MF0000000001
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Валюта Операции СБП - рубли РФ.
+          example: '100000'
+        paymentPurpose:
+          type: string
+          maxLength: 210
+          nullable: true
+          description: Назначение платежа
+          example: оплата по договору №123456789 от 01.09.2001
+        fraudScore:
+          type: string
+          maxLength: 16
+          minLength: 16
+          nullable: true
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        redirectUrl:
+          type: string
+          maxLength: 1024
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        takeTax:
+          type: boolean
+          description: |
+            Информация о взимании НДС. Допустимые значения:
+               * true – облагается НДС;
+               * false – не облагается НДС;
+          enum:
+            - true
+            - false
+          example: true
+        totalTaxAmount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+          description: |
+            Сумма НДС в копейках. Валюта НДС - рубли РФ.
+            Условия заполнения в зависимости от значения поля takeTax:
+              * takeTax=FALSE: totalTaxAmount должно отсутствовать;
+              * takeTax=TRUE: Сумма НДС должна быть указана либо в параметре totalTaxAmount, либо в ЭБД 297 сообщения M05. Таким образом, если Сумма НДС указана в параметре totalTaxAmount, то ЭБД 297 в сообщении M05 должно отсутствовать.
+            При заполненном поле totalTaxAmount, поле amount также должно быть заполнено.
+          example: '0'
+    ReusablePaymentLinkB2BResultOk:
+      title: Успешный ответ на запрос метода "Регистрация многоразовой Функциональной ссылки СБП для B2B"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          required:
+            - qrcId
+            - payload
+            - status
+          type: object
+          properties:
+            qrcId:
+              maxLength: 32
+              type: string
+              description: Идентификатор зарегистрированной Функциональной СБП для B2B
+              example: AO1000670LSS7DN18SJQDNP4B05KLJL2
+            payload:
+              maxLength: 999
+              type: string
+              description: Payload зарегистрированной Платежной или Информационной ссылки СБП
+              example: https://b2b.cbrpay.ru/AO1000670LSS7DN18SJQDNP4B05KLJL2
+            status:
+              type: string
+              description: Статус регистрации Платежной или Информационной ссылки СБП
+              example: CREATED
+              enum:
+                - CREATED
+            image:
+              $ref: '#/components/schemas/imageDataDto'
+    AddActiveParams:
+      title: Данные метода "Активация Кассовой ссылки СБП"
+      required:
+        - amount
+      type: object
+      properties:
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число.
+          example: '350'
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        currency:
+          type: string
+          description: |
+            Валюта операции (необязательный параметр, при отсутствии его значение приниматся = "RUB"):
+              * RUB - Российский рубль
+          enum:
+            - RUB
+        qrTtl:
+          type: integer
+          description: |
+            Период использования Кассовой ссылки в минутах. Необязательное поле. Минимальное допустимое значение - 2. Максимальное допустимое значение - 20. Если поле "qrTtl" не передано в запросе метода "Активация Кассовой ссылки", то за период использования Кассовой ссылки берется значение по умолчанию – 5 минут.
+          example: '7'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+    ResponseDtoActiveParamsResponse:
+      title: Успешный ответ на запрос метода "Активация Кассовой  СБП"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/ActiveParamsResponse'
+    ActiveParamsResponse:
+      title: Успешный ответ на запрос метода "Активация Кассовой ссылки СБП", блок data
+      required:
+        - paramsId
+        - qrcId
+        - amount
+      type: object
+      properties:
+        paramsId:
+          type: string
+          maxLength: 32
+          minLength: 32
+          description: Идентификатор активных значений параметров Кассовой ссылки СБП
+          example: '83746290376583029856473829018735'
+        qrcId:
+          type: string
+          maxLength: 32
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          example: AS1000670LSS7DN18SJQDNP4B05KLJL2
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число.
+          example: '350'
+        currency:
+          type: string
+          description: Валюта операции
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+          nullable: true
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+    CashRegisterQrUpdateAccount200Ok:
+      title: Успешный ответ на запрос метода "Изменение счета ЮЛ, ИП или самозанятого для зарегистрированной Кассовой ссылки СБП"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/CashRegisterQrUpdateAccount200OkResultData'
+    UpdateCashRegisterQrRequest:
+      title: Данные метода "Изменение счета ЮЛ, ИП или самозанятого для зарегистрированной Кассовой ссылки СБП"
+      required:
+        - account
+      type: object
+      properties:
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: Счет ЮЛ, ИП или самозанятого
+          example: '40702810100010000001'
+    CashRegisterQrUpdateAccount200OkResultData:
+      title: Успешный ответ на запрос метода "Изменение счета ЮЛ, ИП или самозанятого для зарегистрированной Кассовой ссылки СБП", блок data
+      required:
+        - qrcId
+        - status
+        - account
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          example: AS1000670LSS7DN18SJQDNP4B05KLJL2
+        status:
+          type: string
+          description: Статус изменения счета в СБП
+          example: UPDATED
+          enum:
+            - UPDATED
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: Счет ЮЛ, ИП или самозанятого
+          example: '40702810100010000001'
+    qrcStatusDto:
+      required:
+        - qrcIds
+      title: Данные метода "Запрос статуса Операций СБП по идентификатору QR Dynamic (v1)"
+      type: object
+      properties:
+        qrcIds:
+          type: array
+          description: Массив qrcId, по которым нужно получить статус Операций СБП C2B
+          items:
+            maxLength: 32
+            type: string
+            description: Идентификатор зарегистрированной Платежной ссылки СБП
+            example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+    qrcStatusResultOk:
+      title: Успешный ответ на "Запрос статуса Операций СБП по идентификатору QR Dynamic (v1)"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          type: array
+          description: Массив статусов Операций СБП C2B
+          items:
+            required:
+              - code
+              - message
+              - qrcId
+            type: object
+            properties:
+              qrcId:
+                maxLength: 32
+                type: string
+                description: Идентификатор Платежной ссылки СБП, запрос по которой направлялся
+                example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+              code:
+                maxLength: 7
+                type: string
+                description: Код ответа на запрос статусов Операций СБП C2B
+                example: RQ00000
+              message:
+                maxLength: 255
+                type: string
+                description: Описание кода ответа на запрос
+                example: Запрос обработан успешно
+              status:
+                type: string
+                nullable: true
+                description: |
+                  Статус Операции СБП:
+                    * ACWP - ACCEPTED операция завершена успешно;
+                    * RCVD - RECEIVED операция в обработке;
+                    * RJCT - REJECTED операция отклонена;
+                    * NTST - NOT_STARTED операции по Платежной ссылке СБП не существует;
+                enum:
+                  - ACWP
+                  - RCVD
+                  - RJCT
+                  - NTST
+              trxId:
+                maxLength: 32
+                type: string
+                nullable: true
+                description: Идентификатор Операции СБП
+                example: X1A2S3D5F6G7H8J9K0C4S5C6D7V5D1K2
+    qrcStatusDtoV2:
+      required:
+        - qrcIds
+      title: Данные метода "Запрос статуса Операций СБП по идентификатору QR Dynamic (v2)"
+      type: object
+      properties:
+        qrcIds:
+          type: array
+          description: Массив qrcId, по которым нужно получить статус Операций СБП C2B
+          items:
+            maxLength: 32
+            type: string
+            description: Идентификатор зарегистрированной Платежной ссылки СБП
+            example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+    qrcStatusV2ResultOk:
+      title: Успешный ответ на "Запрос статуса Операций СБП по идентификатору QR Dynamic (v2)"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          type: array
+          description: Массив статусов Операций СБП C2B
+          items:
+            required:
+              - code
+              - message
+              - qrcId
+            type: object
+            properties:
+              qrcId:
+                maxLength: 32
+                type: string
+                description: Идентификатор Платежной ссылки СБП, запрос по которой направлялся
+                example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+              code:
+                maxLength: 7
+                type: string
+                description: Код ответа на запрос статусов Операций СБП C2B
+                example: RQ00000
+              message:
+                maxLength: 255
+                type: string
+                description: Описание кода ответа на запрос
+                example: Запрос обработан успешно
+              status:
+                type: string
+                nullable: true
+                description: |
+                  Статус Операции СБП:
+                    * ACWP - ACCEPTED операция завершена успешно;
+                    * RCVD - RECEIVED операция в обработке;
+                    * RJCT - REJECTED операция отклонена;
+                    * NTST - NOT_STARTED операции по Платежной ссылке СБП не существует;
+                enum:
+                  - ACWP
+                  - RCVD
+                  - RJCT
+                  - NTST
+              trxId:
+                maxLength: 32
+                type: string
+                nullable: true
+                description: Идентификатор Операции СБП
+                example: X1A2S3D5F6G7H8J9K0C4S5C6D7V5D1K2
+              kzo:
+                maxLength: 128
+                type: string
+                description: Контрольное Значение Операции СБП. Формируется ОПКЦ СБП на основании собственных алгоритмов. Присутствует при условии, что Операция СБП C2B по запрашиваемому qrcId завершена успешно (параметр "status" ="ACWP").
+                example: FDOS4JUETLYT639ADAFZ4GAUY9VSM2TG2Y595LQ20EKQF3JM1CIV4ZTZYA1EYIMFMEJSRB2UR7KATMA29QYMY9KLA2NHRHZ1SKEJ947DTTS67M1GZ6DDUXGJWUXH0Z7X
+    PaymentResponseV3Dto:
+      required:
+        - code
+        - message
+        - data
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)"
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/PaymentQrcInfoV3Dto'
+    PaymentQrcInfoV3Dto:
+      required:
+        - qrcId
+        - qrcType
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - crc
+        - mcc
+        - agentId
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)", блок data
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '02'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Поле обязательно для qrcType = "02". Всегда отсутствует при qrcType = 03. Может отсутствовать при регистрации qrcType = 01.
+          nullable: true
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          nullable: true
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        crc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: Значение контрольной суммы содержимого Платежной ссылки
+          example: C08B
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          nullable: true
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Платежную ссылку СБП
+          example: A00000000001
+    SubscriptionResponseV3Dto:
+      required:
+        - code
+        - message
+        - data
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)" в сценарии "Привязка счета без оплаты"
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/SubscriptionQrcInfoV3Dto'
+    SubscriptionQrcInfoV3Dto:
+      required:
+        - qrcId
+        - qrcType
+        - subscriptionPurpose
+        - legalEntityId
+        - legalName
+        - inn
+        - brandName
+        - memberId
+        - agentId
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)" в сценарии "Привязка счета без оплаты", блок data
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Информационной ссылки СБП
+          example: AR100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '03'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ или ИП
+          example: '4285733785'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Информационную ссылку СБП
+          example: A00000000001
+    PaymentWithSubscriptionResponseV3Dto:
+      required:
+        - code
+        - message
+        - data
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)" в сценарии "Оплата с привязкой счета"
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/PaymentWithSubscriptionQrcInfoV3Dto'
+    PaymentWithSubscriptionQrcInfoV3Dto:
+      required:
+        - qrcId
+        - qrcType
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - crc
+        - mcc
+        - subscriptionPurpose
+        - legalEntityId
+        - inn
+        - agentId
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v3)" в сценарии "Оплата с привязкой счета", блок data
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '02'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Поле обязательное для qrcType = 02.
+          nullable: true
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          nullable: true
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        crc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: Значение контрольной суммы содержимого Платежной ссылки СБП
+          example: C08B
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          nullable: true
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначении привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ или ИП
+          example: '4285733785'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Платежную ссылку СБП
+          example: A00000000001
+    PaymentPetitionDto:
+      title: Данные метода "Запрос в ОПКЦ СБП на оплату с привязанного счета Плательщика от Агента ТСП"
+      required:
+        - qrcId
+        - memberId
+        - subscriptionToken
+      type: object
+      properties:
+        memberId:
+          type: string
+          description: Идентификатор Банка Плательщика
+          maxLength: 12
+          minLength: 12
+          example: '100000000001'
+        subscriptionToken:
+          type: string
+          description: Уникальный идентификатор привязки счета Плательщика в Банке Плательщика
+          maxLength: 32
+          minLength: 32
+          example: 70LSS7DN18SJQRS10006DNPKLJL24B05
+    DeleteCashRegisterQrcOk:
+      title: Успешный ответ на "Деактивация Кассовой ссылки СБП"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    RefundCreationBody:
+      title: Данные запроса на возврат по Операции СБП C2B
+      required:
+        - agentRefundRequestId
+        - amount
+        - currency
+        - kzo
+        - memberId
+        - merchantId
+        - originalQrcId
+      type: object
+      properties:
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Плательщика, который будет выполнять возврат денежных средств по запросу Агента ТСП
+          example: '100000000001'
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ТСП, инициировавшего запрос на возврат средств
+          example: MF0000000001
+        originalQrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки СБП, по которой выполнена исходная Операция СБП C2B
+          example: AD03610425360300b4ubOp6511E4F998
+        amount:
+          maxLength: 12
+          minLength: 1
+          type: string
+          description: Сумма возврата в копейках
+          example: '1000'
+        currency:
+          maxLength: 3
+          minLength: 3
+          type: string
+          description: Валюта операции
+          example: RUB
+        kzo:
+          maxLength: 128
+          minLength: 1
+          type: string
+          description: Контрольное Значение Операции СБП, полученное в "Уведомлении для Агента ТСП о финальном статусе по Операции СБП C2B от ОПКЦ СБП"
+          example: FDOS4JUETLYT639ADAFZ4GAUY9VSM2TG2Y595LQ20EKQF3JM1CIV4ZTZYA1EYIMFMEJSRB2UR7KATMA29QYMY9KLA2NHRHZ1SKEJ947DTTS67M1GZ6DDUXGJWUXH0Z7X
+        agentRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса, назначаемый ТСП или Агентом ТСП для однозначной идентификации запроса на стороне Банка Плательщика, ТСП и Агента ТСП
+          example: 3842ca282aea11e88feca860b60304d5
+    CreateRefundResponse:
+      title: Данные запроса на возврат по Операции СБП C2B
+      required:
+        - opkcRefundRequestId
+      type: object
+      properties:
+        opkcRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса на возврат, назначенный ОПКЦ СБП
+          example: A003610425360300b4ubOp6511E4565
+    RefundCreationResponseDto:
+      title: Успешный ответ на создание запроса на возврат по Операции СБП C2B
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/CreateRefundResponse'
+    RefundStatusResponse:
+      type: object
+      properties:
+        agentRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса, назначаемый ТСП или Агентом ТСП
+          example: 3842ca282aea11e88feca860b60304d5
+        status:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: Статус запроса на возврат
+          example: ACWP
+          enum:
+            - RCVD
+            - ACWP
+            - RJCT
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа, соответствующий решению Банка Плательщика по запросу на возврат
+          nullable: true
+          example: RQ00030
+          enum:
+            - RQ00030
+            - RQ05039
+            - RQ05040
+            - RQ05041
+            - RQ07999
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          nullable: true
+          example: Не найдена исходная Операция СБП C2B
+      description: Статус запроса на возврат
+    RefundStatusResponseDto:
+      title: Статус запроса на возврат по Операции СБП C2B
+      type: object
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/RefundStatusResponse'
+    LegalEntityDto:
+      title: Данные метода "Регистрация ЮЛ или ИП"
+      required:
+        - agentId
+        - ogrn
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1147746831352'
+        subscriptionsRestricted:
+          type: boolean
+          default: false
+          example: true
+          description: Флаг ограничения Сценариев привязки счета и оплаты с привязанного счета для ЮЛ или ИП
+    LegalEntityResultData:
+      title: Успешный ответ на запрос метода "Регистрация ЮЛ или ИП" или метода "Регистрация Самозанятого" (блок data)
+      required:
+        - ticketId
+      type: object
+      properties:
+        ticketId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Временный регистрационный номер
+          example: b5ffebc7ee9b4c3bb8865eaec4e6ab05
+    LegalEntityResultOk:
+      title: Успешный ответ на запрос метода "Регистрация ЮЛ или ИП" или метода "Регистрация Самозанятого"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/LegalEntityResultData'
+    Error400ResultDataRM05001:
+      title: Содержимое ответа при коде ошибки 400
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RM05001
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Агент ТСП с указанным идентификатором в поле AgentId не найден
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    Error403ResultData:
+      title: Доступ запрещен
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    SetLegalParameters:
+      title: Данные метода "Управление параметрами Клиента – ЮЛ или ИП"
+      type: object
+      properties:
+        subscriptionsRestricted:
+          type: boolean
+          description: Флаг ограничения Сценариев привязки счета и оплаты с привязанного счета для ЮЛ или ИП
+          example: true
+    LegalShortDto2:
+      title: Успешный ответ на запрос "Управление параметрами Клиента - ЮЛ или ИП", блок data
+      type: object
+      properties:
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          nullable: false
+          description: Идентификатор зарегистрированного ЮЛ, ИП или самозанятого в СБП
+          example: LF0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 12
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        subscriptionsRestricted:
+          type: boolean
+          description: Флаг ограничения Сценариев привязки счета и оплаты с привязанного счета для ЮЛ или ИП
+          example: true
+    LegalDataResultOk2:
+      title: Успешный ответ на запрос "Управление параметрами Клиента - ЮЛ или ИП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        data:
+          $ref: '#/components/schemas/LegalShortDto2'
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+    SelfEmployeeRegistrationRequestDto:
+      title: Данные метода "Регистрация Самозанятого"
+      required:
+        - agentId
+        - firstName
+        - inn
+        - lastName
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        inn:
+          type: string
+          description: ИНН
+          minLength: 12
+          maxLength: 12
+          example: '781633333333'
+        lastName:
+          type: string
+          description: Фамилия
+          minLength: 1
+          example: Петрова
+        firstName:
+          type: string
+          description: Имя
+          minLength: 1
+          example: Анна Мария
+        middleName:
+          type: string
+          description: Отчество
+          minLength: 1
+          example: Сергеевна
+    LegalTicketResultData:
+      title: Успешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v1)", блок data
+      required:
+        - status
+      type: object
+      properties:
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          nullable: true
+          description: Идентификатор зарегистрированного ЮЛ, ИП или самозанятого в СБП
+          example: LF0000000001
+        status:
+          type: string
+          description: Статус регистрации юридического лица
+          example: CREATED
+          enum:
+            - IN_PROCESS
+            - CREATED
+            - ERROR
+        code:
+          maxLength: 7
+          type: string
+          nullable: true
+          description: Код ответа на результат регистрации ЮЛ, ИП или самозанятого
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          nullable: true
+          description: Описание кода ответа на результат регистрации ЮЛ, ИП или самозанятого
+          example: Запрос обработан успешно
+    LegalTicketResultOk:
+      title: Успешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v1)"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/LegalTicketResultData'
+    LegalTicketResultBad:
+      title: Неуспешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v1)" или "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v2)"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    LegalEntityData:
+      title: Успешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v2)", блок legalEntity
+      required:
+        - agentId
+        - countryCode
+        - inn
+        - name
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        name:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ; ФИО ИП или самозанятого
+          example: АО НСПК
+        type:
+          maxLength: 10
+          minLength: 2
+          nullable: true
+          type: string
+          description: Организационно-правовая форма ЮЛ, ИП или самозанятого
+          example: АО
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: Идентификационный номер налогоплательщика
+          example: '7706812159'
+        ogrn:
+          maxLength: 15
+          minLength: 12
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1147746831352'
+        countryCode:
+          maxLength: 2
+          minLength: 2
+          type: string
+          description: Код страны-регистрации ЮЛ, ИП или самозанятого в формате "ISO 3166, Alpha-2"
+          example: RU
+        countrySubDivisionCode:
+          maxLength: 2
+          minLength: 2
+          nullable: true
+          type: string
+          description: Код региона-регистрации ЮЛ, ИП или самозанятого
+          example: '45'
+        city:
+          maxLength: 280
+          type: string
+          nullable: true
+          description: Город
+          example: Москва
+        zip:
+          maxLength: 6
+          minLength: 6
+          type: string
+          nullable: true
+          description: Индекс
+          example: '115184'
+        address:
+          maxLength: 500
+          type: string
+          nullable: true
+          description: Юридический адрес ЮЛ, ИП или самозанятого
+          example: улица Большая Татарская, дом 11
+    LegalTicketResultDataV2:
+      title: Успешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v2)", блок data
+      required:
+        - status
+      type: object
+      properties:
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          nullable: true
+          description: Идентификатор зарегистрированного ЮЛ, ИП или самозанятого в СБП
+          example: LF0000000001
+        status:
+          type: string
+          description: Статус регистрации ЮЛ, ИП или самозанятого
+          example: CREATED
+          enum:
+            - IN_PROCESS
+            - CREATED
+            - ERROR
+        code:
+          maxLength: 7
+          type: string
+          nullable: true
+          description: Код ответа на результат регистрации ЮЛ, ИП или самозанятого
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          nullable: true
+          description: Описание кода ответа на результат регистрации ЮЛ, ИП или самозанятого
+          example: Запрос обработан успешно
+        legalEntity:
+          $ref: '#/components/schemas/LegalEntityData'
+    LegalTicketResultOkV2:
+      title: Успешный ответ на "Запрос статуса регистрации ЮЛ, ИП или самозанятого (v2)"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/LegalTicketResultDataV2'
+    LegalShortDto:
+      title: Успешный ответ на "Запрос данных ЮЛ, ИП или самозанятого", блок data
+      type: object
+      properties:
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в СБП
+          example: LF0000000001
+        name:
+          maxLength: 512
+          type: string
+          description: Наименование ЮЛ, ИП или самозанятого
+          example: OOO Ромашка
+        ogrn:
+          maxLength: 15
+          minLength: 12
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН
+          example: '3664069397'
+    LegalDataResultOk:
+      title: Успешный ответ на "Запрос данных ЮЛ, ИП или самозанятого"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        data:
+          $ref: '#/components/schemas/LegalShortDto'
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+    LegalAccountDto:
+      title: Данные метода "Регистрация счета ЮЛ или ИП"
+      required:
+        - account
+        - agentId
+        - legalId
+        - memberId
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в СБП
+          example: LF0000000001
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: Счет ЮЛ, ИП или самозанятого
+          example: '40702810100010000001'
+    LegalAccountResultData:
+      title: Успешный ответ на на запрос метода "Регистрация счета ЮЛ или ИП", блок data
+      required:
+        - account
+        - status
+      type: object
+      properties:
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: Зарегистрированный счет в СБП
+          example: '40702810100010000001'
+        status:
+          type: string
+          description: Статус регистрации счета ЮЛ, ИП или самозанятого
+          example: CREATED
+          enum:
+            - CREATED
+    LegalAccountResultOk:
+      title: Успешный ответ на запрос метода "Регистрация счета ЮЛ или ИП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/LegalAccountResultData'
+    LegalAccountResultBad:
+      title: Неуспешный ответ на на запрос метода "Регистрация счета ЮЛ или ИП"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    MerchantDto:
+      title: Данные метода "Регистрация ТСП"
+      required:
+        - address
+        - agentId
+        - brandName
+        - city
+        - countryCode
+        - countrySubDivisionCode
+        - legalId
+        - mcc
+        - zip
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        legalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого
+          example: LF0000000001
+        brandName:
+          maxLength: 35
+          type: string
+          description: Наименоание ТСП (имя по вывеске)
+          example: Кофейня у Артема
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC код
+          example: '4122'
+        countryCode:
+          maxLength: 2
+          minLength: 2
+          type: string
+          description: Код страны регистрации ТСП, в формате "ISO 3166, Alpha-2"
+          example: RU
+        countrySubDivisionCode:
+          maxLength: 2
+          minLength: 2
+          type: string
+          description: Код региона регистрации ТСП
+          example: '45'
+        city:
+          maxLength: 140
+          type: string
+          description: Город фактического адреса ТСП
+          example: Москва
+        zip:
+          maxLength: 6
+          minLength: 6
+          type: string
+          description: Индекс
+          example: '115184'
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: улица Большая Татарская, дом 11
+        contactPhoneNumber:
+          maxLength: 13
+          minLength: 10
+          type: string
+          description: Контактный номер телефона ТСП
+          example: '79991234567'
+        capabilities:
+          maxLength: 3
+          minLength: 3
+          type: string
+          description: Поле зарезервировано под будущие изменения.
+    MerchantResultData:
+      title: Успешный ответ на запрос метода "Регистрация ТСП", блок data
+      required:
+        - merchantId
+        - status
+      type: object
+      properties:
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор зарегистрированного ТСП в СБП
+          example: MF0000000001
+        status:
+          type: string
+          description: Статус регистрации ТСП
+          example: CREATED
+          enum:
+            - CREATED
+    MerchantResultOk:
+      title: Успешный ответ на запрос метода "Регистрация ТСП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/MerchantResultData'
+    MerchantResultBad:
+      title: Неуспешный ответ на запрос метода "Регистрация ТСП"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    MerchantShortDto:
+      title: Успешный ответ на "Запрос данных ТСП", блок data
+      type: object
+      properties:
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ТСП в СБП
+          example: MR1234567890
+        brandName:
+          maxLength: 35
+          type: string
+          description: Название ТСП (имя по вывеске)
+          example: Кофейня у Артема
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC код
+          example: '4122'
+        address:
+          maxLength: 140
+          type: string
+          description: Адрес ТСП
+          example: Москва, улица Большая Татарская, дом 11
+    MerchantDataResultOk:
+      title: Успешный ответ на "Запрос данных ТСП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RM00000
+        data:
+          $ref: '#/components/schemas/MerchantShortDto'
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+    Error400ResultDataRM05015:
+      title: Содержимое ответа при коде ошибки 400
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RM05015
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: ТСП с указанным идентификатором в поле merchantId не найдено
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    LegalMerchantDto:
+      title: Информация о ТСП
+      type: object
+      properties:
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ТСП в СБП
+          example: MR1234567890
+        brandName:
+          maxLength: 35
+          type: string
+          description: Название ТСП (имя по вывеске)
+          example: Кофейня у Артема
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC код
+          example: '4122'
+        address:
+          maxLength: 140
+          type: string
+          description: Адрес ТСП
+          example: Москва, улица Большая Татарская, дом 11
+        registrationDate:
+          type: string
+          maxLength: 10
+          minLength: 10
+          description: Дата регистрации ТСП
+          example: '2022-05-24'
+    MerchantsByMemberData:
+      title: Список ТСП, зарегистрированных Банковским Агентом, и информация о Банке-Участнике
+      type: object
+      properties:
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка-Участника
+          example: '100000000001'
+        memberName:
+          maxLength: 50
+          type: string
+          description: Наименование Банка-Участника
+          example: Банк Системы Быстрых Платежей
+        merchants:
+          type: array
+          description: ТСП, зарегистрированные Банковским Агентом
+          items:
+            $ref: '#/components/schemas/LegalMerchantDto'
+    MerchantsByLegalEntityData:
+      title: Успешный ответ на "Получение списка ТСП, зарегистрированных для ЮЛ или ИП", блок data
+      type: object
+      properties:
+        legalName:
+          maxLength: 512
+          type: string
+          description: Наименование ЮЛ, ИП
+          example: OOO Ромашка
+        members:
+          type: array
+          description: Список Банков-Участников и ТСП, зарегистрированных их Банковскими Агентами
+          items:
+            $ref: '#/components/schemas/MerchantsByMemberData'
+    MerchantsByLegalDto:
+      title: Успешный ответ на запрос метода "Получение списка ТСП, зарегистрированных для ЮЛ или ИП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RM00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/MerchantsByLegalEntityData'
+    Error400ResultDataRM03005:
+      title: Содержимое ответа при коде ошибки 400
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RM03005
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Ошибка валидации. Некорректная длина ОГРН
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    QrcDataDto:
+      title: Данные метода "Регистрация Функциональной ссылки СБП"
+      required:
+        - agentId
+        - memberId
+        - merchantId
+        - qrcType
+        - templateVersion
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: |
+            Банковский счет ЮЛ, ИП или самозанятого
+            Поле обязательно для заполнения, если qrcType = "01" или qrcType = "02".
+          example: '40702810100010000001'
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ТСП
+          example: MF0000000001
+        templateVersion:
+          type: string
+          description: |
+            Версия payload:
+              * 01 - Версия 1
+          enum:
+            - '01'
+        qrcType:
+          type: string
+          description: |
+            Тип ссылки СБП:
+              * 01 - QR-Static (Многоразовая Платежная ссылка СБП). Может использоваться для выполнения множества Операций СБП C2B
+              * 02 - QR-Dynamic (Одноразовая Платежная ссылка СБП). Предназначена для выполнения единичной Операции СБП C2B. Используется в Сценариях "Оплата с привязкой счета" и "Оплата с привязанного счета"
+              * 03 - QR-Subscription (Информационная ссылка СБП для привязки счета Плательщика)
+          example: '02'
+          enum:
+            - '01'
+            - '02'
+            - '03'
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: |
+            Сумма Операции СБП C2B в копейках. Целое, положительное число.
+            Обязателен для заполнения, если qrcType = "02". Всегда отсутствует для qrcType = "03". Может отсутствовать при регистрации qrcType = 01.
+          example: '100000'
+        currency:
+          type: string
+          description: |
+            Валюта операции:
+              * RUB - Российский рубль
+          enum:
+            - RUB
+        qrTtl:
+          type: integer
+          description: |
+            Срок жизни Функциональной ссылки СБП в минутах. Необязательное поле. Минимальное допустимое значение - "1". Максимальное допустимое значение - "129 600" (90 дней). __Внимание! Рекомендация ОПКЦ СБП: устанавливать срок жизни Функциональной ссылки СБП не менее "5" минут.__ Если поле "qrTtl" не передано в запросе, будет использовано значение по умолчанию - "4 320" минут (3 суток). Неприменимо для qrcType = "01".
+          example: '60'
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа. Обязательно к заполнению в сценарии "Оплата с привязанного счета".
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение привязки счета. Поле обязательно для qrcType = "03" и для qrcType = "02" в сценарии "Оплата с привязкой счета"
+          example: Оплата завтраков в Кофейне у Артема
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+    imageDataDto:
+      title: Объект QR-кода
+      required:
+        - content
+        - mediaType
+      type: object
+      properties:
+        mediaType:
+          type: string
+          description: |
+            Формат получаемого файла:
+              * image/png - png
+              * image/svg+xml - xml of svg
+          example: image/png
+          enum:
+            - image/png
+            - image/svg+xml
+        content:
+          type: string
+          description: base64encoded image. Формат для декодирования зависит от mediaType
+          example: iVBORw0KGgoAAAANSUhEUgAABEoAAARKCAIAAADXJAK3AAAABmJLR0QA/wD...YII=
+    qrcDataResultOk:
+      title: Успешный ответ на запрос метода "Регистрация Функциональной ссылки СБП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          required:
+            - payload
+            - qrcId
+            - status
+          type: object
+          properties:
+            qrcId:
+              maxLength: 32
+              type: string
+              description: Идентификатор зарегистрированной Платежной или Информационной ссылки СБП
+              example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+            payload:
+              maxLength: 999
+              type: string
+              description: Payload зарегистрированной Платежной или Информационной ссылки СБП. Внимание! Формат ссылки меняется с 01.10.2022 г. В примере указан текущий формат.
+              example: https://qr.nspk.ru/AD1000670LSS7DN18SJQDNP4B05KLJL2?type=01&bank=100000000001&sum=10000&cur=RUB&crc=C08B
+            status:
+              type: string
+              description: Статус регистрации Платежной или Информационной ссылки СБП
+              example: CREATED
+              enum:
+                - CREATED
+            image:
+              $ref: '#/components/schemas/imageDataDto'
+    qrcPayloadResultData:
+      title: Успешный ответ на запрос метода "Запрос содержимого ранее зарегистрированной Платежной или Информационной ссылки СБП", блок Data
+      required:
+        - payload
+        - qrcId
+        - status
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной или Информационной ссылки СБП
+          example: AS1000670LSS7DN18SJQDNP4B05KLJL2
+        payload:
+          maxLength: 999
+          type: string
+          description: Содержимое зарегистрированной Платежной или Информационной ссылки СБП. Внимание! Формат ссылки меняется с 01.10.2022 г. В примере указан текущий формат.
+          example: https://qr.nspk.ru/AS1000670LSS7DN18SJQDNP4B05KLJL2?type=01&bank=100000000001&sum=10000&cur=RUB&crc=C08B
+        status:
+          type: string
+          description: Статус регистрации Платежной или Информационной ссылки СБП
+          example: CREATED
+          enum:
+            - CREATED
+        image:
+          $ref: '#/components/schemas/imageDataDto'
+    qrcPayloadResultOk:
+      title: Успешный ответ на запрос метода "Запрос содержимого ранее зарегистрированной Платежной или Информационной ссылки СБП"
+      required:
+        - code
+        - data
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/qrcPayloadResultData'
+    Error400ResultDataRQ05014:
+      title: Содержимое ответа при коде ошибки 400
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RQ05014
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Значение qrcId не найдено
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    CashRegQrRequest:
+      title: Данные метода "Регистрация Кассовой ссылки СБП"
+      required:
+        - agentId
+        - memberId
+        - merchantId
+        - account
+      type: object
+      properties:
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП
+          example: A00000000001
+        memberId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        merchantId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор зарегистрированного ТСП в СБП
+          example: MF0000000001
+        account:
+          maxLength: 20
+          minLength: 20
+          type: string
+          description: Банковский счет ЮЛ, ИП или самозанятого
+          example: '40702810100010000001'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор многоразовой Платежной ссылки, предварительно полученный в запросе "Получение идентификаторов для многоразовых ссылок СБП".
+          example: AS100074066RHM939FE9OQKR0TQ63HB6
+    QrcPayloadDto:
+      title: Успешный ответ на запрос метода "Регистрация Кассовой ссылки СБП", блок data
+      required:
+        - qrcId
+        - payload
+        - status
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Кассовой ссылки СБП
+          example: AS1000670LSS7DN18SJQDNP4B05KLJL2
+        payload:
+          type: string
+          description: Payload зарегистрированной Кассовой ссылки СБП. Внимание! Формат ссылки меняется с 01.10.2022 г. В примере указан текущий формат.
+          example: https://qr.nspk.ru/AS1000670LSS7DN18SJQDNP4B05KLJL2?type=01&bank=100000000001&sum=10000&cur=RUB&crc=C08B
+        status:
+          type: string
+          description: Статус регистрации Кассовой ссылки СБП
+          example: CREATED
+          enum:
+            - CREATED
+        image:
+          $ref: '#/components/schemas/imageDataDto'
+    ResponseDtoQrcPayloadDto:
+      title: Успешный ответ на запрос метода "Регистрация Кассовой ссылки СБП"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/QrcPayloadDto'
+    SuccessfulResponse200:
+      title: Успешный ответ на Запрос
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    Error401ResultData:
+      title: Ошибка авторизации
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    C2BNotificationV1Dto:
+      title: Данные "Уведомления для Агента ТСП о финальном статусе Операции СБП C2B (v1)"
+      required:
+        - amount
+        - payerId
+        - qrcId
+        - status
+        - timestamp
+        - trxId
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки СБП
+        trxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Операции СБП C2B
+        paramsId:
+          type: string
+          maxLength: 32
+          minLength: 32
+          description: Идентификатор активных значений параметров Платежной ссылки СБП. Передается, если оплата происходила по Кассовой ссылке СБП
+        status:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: |
+            Финальный статус Операции СБП C2B:
+            * "ACWP" - ACCEPTED операция завершена успешно;
+            * "RJCT" - REJECTED операция отклонена;
+        amount:
+          type: integer
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число.
+        errorCode:
+          nullable: true
+          maxLength: 6
+          minLength: 6
+          type: string
+          description: зарезервированное поле для будущего использования
+        message:
+          nullable: true
+          maxLength: 105
+          minLength: 1
+          type: string
+          description: зарезервированное поле для будущего использования
+        timestamp:
+          type: string
+          description: Дата и время выполнения Операции СБП C2B
+        payerId:
+          maxLength: 15
+          minLength: 13
+          type: string
+          description: маскированный номер телефона Клиента-Плательщика
+      example:
+        qrcId: AD1000038AQ1FG409KGACUQU5QRSH3FM
+        trxId: A105600390167601000004681598593B
+        paramsId: '83746290376583029856473829018735'
+        status: ACWP
+        amount: 100000
+        timestamp: '2021-03-02T17:15:01.148'
+        payerId: '*********6731'
+    C2BNotificationV2Dto:
+      title: Данные "Уведомления для Агента ТСП о финальном статусе Операции СБП C2B (v2)"
+      required:
+        - amount
+        - payerId
+        - qrcId
+        - status
+        - timestamp
+        - trxId
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки СБП
+          example: AD1000038AQ1FG409KGACUQU5QRSH3FM
+        trxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Операции СБП C2B
+          example: A105600390167601000004681598593B
+        paramsId:
+          type: string
+          maxLength: 32
+          minLength: 32
+          description: Идентификатор активных значений параметров Платежной ссылки СБП. Передается, если оплата происходила по Кассовой ссылке СБП
+          example: '83746290376583029856473829018735'
+        status:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: |
+            Финальный статус Операции СБП C2B:
+            * "ACWP" - ACCEPTED операция завершена успешно;
+            * "RJCT" - REJECTED операция отклонена;
+          enum:
+            - ACWP
+            - RJCT
+          example: ACWP
+        amount:
+          type: integer
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число.
+          example: 5000
+        errorCode:
+          nullable: true
+          maxLength: 6
+          minLength: 6
+          type: string
+          description: Зарезервированное поле для будущего использования
+        message:
+          nullable: true
+          maxLength: 105
+          minLength: 1
+          type: string
+          description: Зарезервированное поле для будущего использования
+        timestamp:
+          type: string
+          description: Дата и время выполнения Операции СБП C2B
+          example: '2021-03-02T17:15:01.148'
+        payerId:
+          maxLength: 15
+          minLength: 13
+          type: string
+          description: Маскированный номер телефона Клиента-Плательщика
+          example: '*********6731'
+        kzo:
+          maxLength: 128
+          type: string
+          description: Контрольное Значение Операции СБП. Формируется ОПКЦ СБП на основании собственных алгоритмов. Присутствует при условии, что Операция СБП C2B по запрашиваемому qrcId завершена успешно (параметр "status" ="ACWP").
+          example: FDOS4JUETLYT639ADAFZ4GAUY9VSM2TG2Y595LQ20EKQF3JM1CIV4ZTZYA1EYIMFMEJSRB2UR7KATMA29QYMY9KLA2NHRHZ1SKEJ947DTTS67M1GZ6DDUXGJWUXH0Z7X
+    B2CNotificationV1Dto:
+      title: Данные "Уведомления для Агента ТСП о финальном статусе Операции СБП B2C от ОПКЦ СБП"
+      required:
+        - originalQrcId
+        - originalTrxId
+        - trxId
+        - status
+        - amount
+        - errorCode
+        - message
+        - timestamp
+        - payeeId
+        - agentRefundRequestId
+        - opkcRefundRequestId
+      type: object
+      properties:
+        originalQrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки СБП, по которому была выполнена исходная Операция СБП C2B
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        originalTrxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор исходной Операции СБП C2B
+          example: A003610425360300b4ubOp6511E4F998
+        trxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Операции СБП B2C по сценарию «Возврат по Операции СБП C2B»
+          example: A003610425360300b4ubOp6511E4F998
+        status:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: |
+            Финальный статус Операции СБП B2C:
+            * "ACWP" - ACCEPTED операция завершена успешно;
+            * "RJCT" - REJECTED операция отклонена;
+          enum:
+            - ACWP
+            - RJCT
+          example: ACWP
+        amount:
+          type: integer
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП в копейках. Целое, положительное число. Валюта операции – рубли РФ.
+          example: 5000
+        errorCode:
+          nullable: true
+          maxLength: 6
+          minLength: 6
+          type: string
+          description: зарезервированное поле для будущего использования
+        message:
+          nullable: true
+          maxLength: 105
+          minLength: 1
+          type: string
+          description: зарезервированное поле для будущего использования
+        timestamp:
+          type: string
+          description: Дата и время выполнения Операции СБП B2C
+          example: '2021-03-02T17:15:01.148'
+        payeeId:
+          maxLength: 15
+          minLength: 13
+          type: string
+          description: маскированный номер телефона Клиента-Получателя (Плательщика в исходной Операции C2B, кому делается возврат)
+          example: '*********6731'
+        agentRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса на возврат от Агента ТСП
+          example: 3842ca282aea11e88feca860b60304d5
+        opkcRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса на возврат от ОПКЦ СБП
+          example: 70LSS7DN18SJQRS10006DNPKLJL24B05
+    NotificationRefundResolutionV1Dto:
+      title: Данные метода "Уведомление для Агента ТСП о результате обработки запроса на возврат от ОПКЦ СБП"
+      required:
+        - code
+        - message
+        - status
+        - originalTrxId
+        - agentRefundRequestId
+        - opkcRefundRequestId
+      type: object
+      properties:
+        code:
+          description: |
+            Код ответа:
+              * "RQ00030" – Согласие Банка Плательщика на выполнение Операции СБП B2C по сценарию "Возврат по Операции СБП C2B";
+              * "RQ05039" – Отказ от Банка Плательщика. Не найдена исходная Операция СБП C2B;
+              * "RQ05040" – Отказ от Банка Плательщика. Сумма возврата/возвратов превышает сумму исходной Операции СБП C2B;
+              * "RQ05041" – Длительное поручение не найдено в Банке Плательщика;
+              * "RQ07999" – Техническая ошибка;
+          enum:
+            - RQ00030
+            - RQ05039
+            - RQ05040
+            - RQ05041
+            - RQ07999
+          maxLength: 7
+          minLength: 7
+          type: string
+          example: RQ00030
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Согласие на выполнение платежа
+        status:
+          minLength: 4
+          maxLength: 4
+          type: string
+          enum:
+            - ACWP
+            - RJCT
+          description: Статус обработки запроса на возврат средств
+          example: ACWP
+        originalTrxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор исходной Операции СБП C2B
+          example: A003610425360300b4ubOp6511E4F998
+        agentRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса, назначаемый ТСП или Агентом ТСП для однозначной идентификации запроса на стороне Банка Плательщика, ТСП и Агента ТСП.
+          example: 3842ca282aea11e88feca860b60304d5
+        opkcRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса, назначаемый ОПКЦ СБП
+          example: A003610425360300b4ubOp6511E4565
+    NotificationSubscriptionV1Dto:
+      title: Данные метода "Уведомление для Агента ТСП о результате выполнения привязки счета Плательщика от ОПКЦ СБП"
+      required:
+        - code
+        - message
+        - status
+        - qrcId
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+          example: RS00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Запрос обработан успешно
+        status:
+          minLength: 4
+          maxLength: 4
+          type: string
+          description: |
+            Cтатус выполнения привязки счета Плательщика, допустимые значения:
+              *  «ACWP» – привязка счета Плательщика выполнена;
+              *  «RJCT» – привязка счета Плательщика не выполнена;
+          example: ACWP
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной или Информационной ссылки СБП
+          example: AD1000038AQ1FG409KGACUQU5QRSH3FM
+        subscriptionToken:
+          minLength: 32
+          maxLength: 32
+          type: string
+          description: Уникальный идентификатор привязки счета Плательщика в Банке Плательщика
+          example: 70LSS7DN18SJQRS10006DNPKLJL24B05
+          nullable: true
+        memberId:
+          minLength: 12
+          maxLength: 12
+          type: string
+          description: Идентификатор Банка Плательщика
+          example: '100000000003'
+    NotificationResolutionV1Dto:
+      title: Данные метода "Уведомление для Агента ТСП о решении об оплате с привязанного счета Плательщика от ОПКЦ СБП"
+      required:
+        - code
+        - message
+        - qrcId
+      type: object
+      properties:
+        code:
+          description: |
+            Код ответа:
+              * "RQ00030" – Согласие Банка Плательщика на выполнение платежа;
+              * "RQ05031" – Отказ Банка Плательщика. Привязка счета не найдена;
+              * "RQ05032" – Отказ Банка Плательщика в выполнении платежа;
+          maxLength: 7
+          minLength: 7
+          type: string
+          example: RQ00030
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Согласие на выполнение платежа
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки в СБП
+          example: AD1000038AQ1FG409KGACUQU5QRSH3FM
+    B2BNotificationV1Dto:
+      title: Данные "Уведомления для Агента ТСП о финальном статусе Операции СБП B2B от ОПКЦ СБП"
+      required:
+        - qrcId
+        - trxId
+        - status
+        - amount
+        - paymentPurpose
+        - timestamp
+        - payerLegalId
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор зарегистрированного Кассового QR-кода в СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        trxId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Операции СБП B2B
+          example: A003610425360300b4ubOp6511E4F998
+        status:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: |
+            Финальный статус Операции СБП B2B:
+            * "ACWP" - ACCEPTED операция завершена успешно;
+            * "RJCT" - REJECTED операция отклонена;
+          enum:
+            - ACWP
+            - RJCT
+          example: ACWP
+        amount:
+          type: integer
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП в копейках. Целое, положительное число. Валюта операции – рубли РФ.
+          example: 5000
+        taxAmount:
+          type: integer
+          maxLength: 12
+          minLength: 1
+          description: Сумма налога Операции СБП в копейках. Целое, положительное число. Валюта операции – рубли РФ.
+          example: 5
+        paymentPurpose:
+          type: string
+          maxLength: 210
+          minLength: 1
+          description: Назначение платежа.
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        errorCode:
+          nullable: true
+          maxLength: 6
+          minLength: 6
+          type: string
+          description: Зарезервированное поле для будущего использования
+        message:
+          nullable: true
+          maxLength: 105
+          minLength: 1
+          type: string
+          description: Зарезервированное поле для будущего использования
+        timestamp:
+          type: string
+          description: Дата и время выполнения Операции СБП B2B
+          example: '2021-03-02T17:15:01.148'
+        payerLegalId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор юридического лица Плательщика
+          example: LF123456789
+    PaymentQrcInfoV1V2Dto:
+      title: Успешный ответ на "Запрос данных Функциональной ссылки СБП (v1)" и "Запрос данных Функциональной ссылки СБП (v2)", блок data
+      required:
+        - qrcId
+        - qrcType
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - crc
+        - mcc
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '02'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          maxLength: 12
+          type: string
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Обязательно для qrcType = "02". Всегда отсутсвует для qrcType = "03". Может отсутствовать при регистрации qrcType = 01.
+          nullable: true
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          nullable: true
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        crc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: Значение контрольной суммы содержимого Платежной ссылки СБП
+          example: C08B
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП.
+          nullable: true
+          example: '0000000000000000'
+    PaymentResponseV1V2Dto:
+      title: Успешный ответ на "Запрос данных Функциональной ссылки СБП (v1)" и "Запрос данных Функциональной ссылки СБП (v2)"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа на запрос
+          example: RQ00000
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа на запрос
+          example: Запрос обработан успешно
+        data:
+          $ref: '#/components/schemas/PaymentQrcInfoV1V2Dto'
+    SubscriptionQrcInfoV2Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v2)" в Сценарии "Привязка счета без оплаты", блок data
+      required:
+        - qrcId
+        - qrcType
+        - legalEntityId
+        - legalName
+        - inn
+        - brandName
+        - memberId
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Информационной ссылки СБП
+          example: AR100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '03'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ, ИП или самозанятого
+          example: '4285733785'
+    SubscriptionResponseV2Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v2)" в Сценарии "Привязка счета без оплаты"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/SubscriptionQrcInfoV2Dto'
+    PaymentWithSubscriptionQrcInfoV2Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v2)" в Сценарии "Оплата с привязкой счета", блок data
+      required:
+        - qrcId
+        - qrcType
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - crc
+        - mcc
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '02'
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: "Сумма Операции СБП C2B в копейках. Целое, положительное число. Поле обязательно для qrcType = \"02\". Всегда отсутствует при qrcType = 03. Может отсутствовать при регистрации\_qrcType = 01."
+          nullable: true
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          nullable: true
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение платежа
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        crc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: Значение контрольной суммы содержимого Платежной ссылки СБП
+          example: C08B
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          nullable: true
+          example: '0000000000000000'
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ или ИП
+          example: '4285733785'
+    PaymentWithSubscriptionResponseV2Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v2)" в Сценарии "Оплата с привязкой счета"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/PaymentWithSubscriptionQrcInfoV2Dto'
+    PaymentQrcInfoV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)", блок data
+      required:
+        - qrcId
+        - qrcType
+        - scenario
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - mcc
+        - inn
+        - agentId
+        - amount
+        - currency
+        - paymentPurpose
+        - ogrn
+        - redirectUrl
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '01'
+        scenario:
+          type: string
+          nullable: true
+          description: |
+            Тип сценария Функциональной ссылки СБП, допустимые значения:
+              *  «C2B» – Одноразовая Платежная ссылка СБП или многоразовая Платежная ссылка СБП с фиксированной суммой
+              *  «C2B_CASH_REGISTER» – Кассовая Платежная ссылка СБП
+              *  «C2B_OPEN_SUM» – Многоразовая Платежная ссылка СБП с открытой суммой
+
+            Внимание! Для Функциональных ссылок СБП, зарегистрированных до 09.12.2021, поле будет иметь значение "null"
+          enum:
+            - C2B
+            - C2B_CASH_REGISTER
+            - C2B_OPEN_SUM
+          example: C2B
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Поле обязательно для qrcType = "02". Всегда отсутствует при qrcType = 03. Может отсутствовать при регистрации qrcType = 01.
+          nullable: true
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          nullable: true
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          nullable: true
+          description: Назначение платежа
+          example: Капучино 300 мл 1 шт., булочка 1 шт.
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ, ИП или самозанятого
+          example: '4285733785'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Платежную ссылку СБП
+          example: A00000000001
+    PaymentResponseV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/PaymentQrcInfoV4Dto'
+    SubscriptionQrcInfoV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)" в сценарии "Привязка счета без оплаты", блок data
+      required:
+        - qrcId
+        - qrcType
+        - scenario
+        - subscriptionPurpose
+        - legalEntityId
+        - legalName
+        - inn
+        - brandName
+        - memberId
+        - agentId
+        - ogrn
+        - redirectUrl
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Информационной ссылки СБП
+          example: AR100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '03'
+        scenario:
+          type: string
+          description: |
+            Тип сценария Функциональной ссылки СБП, допустимые значения:
+              *  «C2B_SUBSCRIPTION» – Ссылка, зарегистрированная для Сценария «Привязка счета без оплаты»
+          enum:
+            - C2B_SUBSCRIPTION
+          example: C2B_SUBSCRIPTION
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначение привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ, ИП или самозанятого
+          example: '4285733785'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Информационную ссылку СБП
+          example: A00000000001
+    SubscriptionResponseV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)" в сценарии "Привязка счета без оплаты"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/SubscriptionQrcInfoV4Dto'
+    PaymentWithSubscriptionQrcInfoV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)" в сценарии "Оплата с привязкой счета", блок data
+      required:
+        - qrcId
+        - qrcType
+        - scenario
+        - legalName
+        - brandName
+        - address
+        - memberId
+        - mcc
+        - subscriptionPurpose
+        - legalEntityId
+        - inn
+        - agentId
+        - amount
+        - currency
+        - ogrn
+        - redirectUrl
+        - paymentPurpose
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        qrcType:
+          type: string
+          description: Тип ссылки СБП
+          example: '02'
+        scenario:
+          type: string
+          description: |
+            Тип сценария Функциональной ссылки СБП, допустимые значения:
+              *  «C2B_SUBSCRIPTION_WITH_PAYMENT» – Ссылка, зарегистрированная для Сценария «Оплата с привязкой счета»
+          enum:
+            - C2B_SUBSCRIPTION_WITH_PAYMENT
+          example: C2B_SUBSCRIPTION_WITH_PAYMENT
+        legalName:
+          maxLength: 512
+          type: string
+          description: Сокращенное наименование ЮЛ, ИП или самозанятого
+          example: ООО Кофейня у Артема
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        brandName:
+          maxLength: 35
+          type: string
+          description: Торговое наименование ТСП
+          example: Кофейня у Артема
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          description: Сумма Операции СБП C2B в копейках. Целое, положительное число. Поле обязательное для qrcType = 02.
+          example: '10000'
+        currency:
+          type: string
+          description: Валюта операции. Поле обязательное, если заполнено поле amount
+          example: RUB
+        paymentPurpose:
+          maxLength: 140
+          type: string
+          nullable: true
+          description: Назначение платежа
+        address:
+          maxLength: 140
+          type: string
+          description: Фактический адрес ТСП
+          example: г. Воронеж, ул. Лисюкова, д.5, стр.1
+        mcc:
+          maxLength: 4
+          minLength: 4
+          type: string
+          description: MCC
+          example: '4122'
+        fraudScore:
+          maxLength: 16
+          minLength: 16
+          type: string
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        subscriptionPurpose:
+          maxLength: 140
+          type: string
+          description: Назначении привязки счета
+          example: Подписка на кофе по будням
+        legalEntityId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: EA0000000001
+        ogrn:
+          maxLength: 15
+          minLength: 13
+          type: string
+          nullable: true
+          description: Основной государственный регистрационный номер ЮЛ или ИП
+          example: '1053600591197'
+        inn:
+          maxLength: 12
+          minLength: 10
+          type: string
+          description: ИНН ЮЛ, ИП или самозанятого
+          example: '4285733785'
+        redirectUrl:
+          maxLength: 1024
+          type: string
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        agentId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Агента ТСП, который зарегистрировал Платежную ссылку СБП
+          example: A00000000001
+    PaymentWithSubscriptionResponseV4Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП (v4)" в сценарии "Оплата с привязкой счета"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/PaymentWithSubscriptionQrcInfoV4Dto'
+    B2BPaymentLinkInfoDto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП для B2B", блок data
+      required:
+        - qrcId
+        - qrcType
+        - agentId
+        - memberId
+        - legalId
+        - legalName
+        - inn
+        - merchantId
+        - brandName
+        - address
+        - mcc
+        - takeTax
+      type: object
+      properties:
+        qrcId:
+          type: string
+          maxLength: 32
+          minLength: 32
+          description: Идентификатор Платежной ссылки СБП
+          example: AR1000670LSS7DN18SJQDNP4B05KLJL2
+        qrcType:
+          type: string
+          description: Тип Функциональной ссылки СБП для B2B
+          example: '02'
+        agentId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Агента ТСП, который зарегистрировал Платежную ссылку СБП
+          example: A00000000001
+        memberId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор Банка Получателя
+          example: '100000000001'
+        legalId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор ЮЛ или ИП в ОПКЦ СБП
+          example: LF0000000001
+        legalName:
+          type: string
+          maxLength: 512
+          description: Сокращенное наименование ЮЛ или ИП
+          example: ООО Торг
+        inn:
+          type: string
+          maxLength: 12
+          minLength: 10
+          description: ИНН ЮЛ или ИП
+          example: '4285733785'
+        merchantId:
+          type: string
+          maxLength: 12
+          minLength: 12
+          description: Идентификатор ТСП
+          example: MR1234567890
+        brandName:
+          type: string
+          maxLength: 35
+          description: Торговое наименование ТСП
+          example: ООО Торг на Б.Татарской
+        address:
+          type: string
+          maxLength: 140
+          description: Фактический адрес ТСП
+          example: г. Москва, ул. Б.Татарская, д.133, стр.1
+        mcc:
+          type: string
+          maxLength: 4
+          minLength: 4
+          description: MCC
+          example: '4122'
+        amount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+          description: Сумма Операции СБП B2B в копейках. Целое, положительное число. Валюта Операции СБП - рубли РФ. Если поле отсутствует, то Плательщик должен указать сумму Операции СБП при составлении распоряжения на перевод по Операции СБП B2B для передачи значения Банком Плательщика в сообщении M05-pacs.008.001.07
+          example: '100000'
+        paymentPurpose:
+          type: string
+          maxLength: 210
+          nullable: true
+          description: Назначение платежа. Если поле отсутствует, то Плательщик должен указать назначение платежа при составлении распоряжения на перевод по Операции СБП B2B для передачи значения Банком Плательщика в сообщении M05-pacs.008.001.07
+          example: Оплата по договору №123456789 от 01.09.2001
+        fraudScore:
+          type: string
+          maxLength: 16
+          minLength: 16
+          nullable: true
+          description: Индикатор Подозрительной Операции Агента ТСП
+          example: '0000000000000000'
+        redirectUrl:
+          type: string
+          maxLength: 1024
+          nullable: true
+          description: |
+            Содержит ссылку для автоматического возврата Плательщика из приложения Банка в приложение или на сайт ТСП. Обязателен, если значение параметра redirectUrl было указано при регистрации Функциональной ссылки СБП. Допускаются только символы в кодировке ASCII. Формат должен соответствовать спецификации RFC-3986.
+          example: https://exampletsp.io/qwertyui
+        takeTax:
+          type: boolean
+          description: |
+            Информация о взимании НДС. Допустимые значения:
+               * true – облагается НДС;
+               * false – не облагается НДС;
+          enum:
+            - true
+            - false
+          example: true
+        totalTaxAmount:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+          description: |
+            Сумма НДС в копейках. Валюта НДС - рубли РФ.
+            Если поле "totalTaxAmount" отсутствует, а поле "takeTax"=true, то Плательщик должен указать сумму НДС по Операции СБП B2B при составлении распоряжения на перевод по Операции СБП B2B для передачи значения Банком Плательщика в сообщении M05-pacs.008.001.07
+          example: '0'
+        uip:
+          type: string
+          maxLength: 35
+          minLength: 1
+          nullable: true
+          description: Уникальный Идентификатор Платежа, назначаемый Получателем
+          example: 281000670LSS7DN18SJQDNP4B05KLJL2
+    B2BPaymentLinkResponseV1Dto:
+      title: Успешный ответ на  "Запрос данных Функциональной ссылки СБП для B2B"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 7
+          minLength: 7
+          description: Код ответа
+        message:
+          type: string
+          maxLength: 255
+          description: Описание кода ответа
+        data:
+          $ref: '#/components/schemas/B2BPaymentLinkInfoDto'
+    RequestForResolutionV1Dto:
+      title: Данные метода "Запрос в Банк Плательщика на оплату с привязанного счета Плательщика от ОПКЦ СБП"
+      required:
+        - qrcId
+        - legalEntityId
+        - subscriptionToken
+      type: object
+      properties:
+        qrcId:
+          maxLength: 32
+          type: string
+          description: Идентификатор Платежной ссылки СБП
+          example: AD1000670LSS7DN18SJQDNP4B05KLJL2
+        legalEntityId:
+          minLength: 12
+          maxLength: 12
+          type: string
+          description: Идентификатор ЮЛ, ИП или самозанятого в ОПКЦ СБП
+          example: '123456789012'
+        subscriptionToken:
+          minLength: 32
+          maxLength: 32
+          type: string
+          description: Уникальный идентификатор привязки счета Плательщика в Банке Плательщика
+          example: 70LSS7DN18SJQRS10006DNPKLJL24B05
+    SubscriptionResultNotificationV1Dto:
+      title: Данные метода "Уведомление для ОПКЦ СБП о результате выполнения привязки счета Плательщика от Банка Плательщика"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+          example: RS00000
+          enum:
+            - RS00000
+            - RS05001
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Привязка счета оформлена
+        subscriptionToken:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор привязки счета Плательщика в Банке Плательщика
+          nullable: true
+          example: 70LSS7DN18SJQRS10006DNPKLJL24B05
+        memberId:
+          maxLength: 12
+          minLength: 12
+          type: string
+          description: Идентификатор Банка Плательщика
+          example: '100000000001'
+    GeneralResponseDto:
+      title: Общий ответ на методы
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          type: object
+          nullable: true
+          properties: {}
+    SubscriptionPaymantResolutionNotificationV1Dto:
+      title: Данные метода "Уведомление для ОПКЦ СБП о решении об оплате с привязанного счета Плательщика от Банка Плательщика"
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          description: |
+            Код ответа:
+              * "RS00030" – Согласие на выполнение платежа;
+              * "RS05031" – Привязка счета не найдена;
+              * "RS05032" – Отказ в выполнении платежа. Код будет использован в случае, когда привязка счета активна, но платеж не может быть выполнен. Например, сумма запрашиваемого платежа не соответствует выставленным Клиентом лимитам в ДБО Банка Плательщика.
+          minLength: 7
+          maxLength: 7
+          type: string
+          example: RS05032
+        message:
+          description: Описание кода ответа
+          maxLength: 255
+          type: string
+          example: Сумма запрашиваемого платежа не соответствует лимитам в ДБО Банка Плательщика
+    C2BRefundRequestV1Dto:
+      title: Данные метода "Запрос в Банк Плательщика на возврат по Операции СБП C2B"
+      required:
+        - agentId
+        - memberId
+        - merchantId
+        - originalTrxId
+        - originalQrcId
+        - amount
+        - currency
+        - agentRefundRequestId
+        - opkcRefundRequestId
+      type: object
+      properties:
+        agentId:
+          type: string
+          description: Идентификатор Агента ТСП - инициатора запроса
+          maxLength: 12
+          minLength: 12
+          example: A00000000001
+        memberId:
+          type: string
+          description: Идентификатор Банка Плательщика, который будет выполнять возврат денежных средств по запросу Агента ТСП.
+          maxLength: 12
+          minLength: 12
+          example: '100000000001'
+        merchantId:
+          type: string
+          description: Идентификатор ТСП, инициировавшего запрос на возврат средств
+          maxLength: 12
+          minLength: 12
+          example: MF0000000001
+        originalTrxId:
+          type: string
+          description: Идентификатор исходной Операции СБП C2B
+          maxLength: 32
+          minLength: 32
+          example: A003610425360300b4ubOp6511E4F998
+        originalQrcId:
+          type: string
+          description: Идентификатор зарегистрированной Платежной ссылки СБП, по которому выполнена исходная Операция СБП C2B
+          maxLength: 32
+          minLength: 32
+          example: AD100074066RHM939FE9OQKR0TQ63HB6
+        amount:
+          type: string
+          description: Сумма возврата в копейках. Целое, положительное число
+          maxLength: 12
+          minLength: 1
+          example: '50000'
+        currency:
+          type: string
+          description: |
+            Валюта операции: "RUB" - Российский рубль
+          maxLength: 3
+          minLength: 3
+          example: RUB
+        agentRefundRequestId:
+          type: string
+          description: Уникальный идентификатор запроса, назначаемый ТСП или Агентом ТСП для однозначной идентификации запроса на стороне Банка Плательщика, ТСП и Агента ТСП. Параметр должен быть уникальный в рамках одного Агента ТСП. Например, может быть использован формат UUID без дефисов.
+          maxLength: 32
+          minLength: 32
+          example: 3842ca282aea11e88feca860b60304d5
+        opkcRefundRequestId:
+          maxLength: 32
+          minLength: 32
+          type: string
+          description: Уникальный идентификатор запроса, назначенный ОПКЦ СБП
+          example: A003610425360300b4ubOp6511E4565
+    RefundResultNotificationV1Dto:
+      title: Данные для Уведомления о результате обработки запроса на возврат от Банка Плательщика
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: |
+            Код ответа:
+              * "RS00030" – Согласие на выполнение платежа;
+              * "RS05039" – Не найдена исходная Операция СБП C2B;
+              * "RS05040" – Сумма возврата/возвратов превышает сумму исходной Операции СБП C2B;
+              * "RS05041" – Длительное поручение не найдено в Банке Плательщика;
+              * "RS07999" – Техническая ошибка;
+          example: RS00030
+          enum:
+            - RS00030
+            - RS05039
+            - RS05040
+            - RS05041
+            - RS07999
+        message:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: Описание кода ответа
+          example: Не найдена исходная Операция СБП C2B
+    ResponseQrcReservationDto:
+      title: Успешный ответ на запрос метода "Получение идентификаторов для многоразовых ссылок СБП"
+      required:
+        - code
+        - message
+        - data
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          minLength: 7
+          type: string
+          description: Код ответа
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+        data:
+          properties:
+            qrcIds:
+              type: array
+              description: Массив сгенерированных идентификаторов Платежной ссылки СБП
+              items:
+                maxLength: 32
+                type: string
+                description: Идентификатор зарегистрированной Платежной ссылки СБП
+                example: AS1F001K6S85322B9E4P7I518N8LNEUT
+    Error400ResultDataRQ07999:
+      title: Содержимое ответа при коде ошибки 400 (Техническая ошибка)
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          maxLength: 7
+          type: string
+          description: Код ответа
+          example: RQ07999
+        message:
+          maxLength: 255
+          type: string
+          description: Описание кода ответа
+          example: Техническая ошибка
+        data:
+          type: object
+          nullable: true
+          properties: {}
+x-tagGroups:
+  - name: MerchantApi
+    tags:
+      - LegalEntity
+      - LegalAccount
+      - Merchant
+  - name: PaymentApi
+    tags:
+      - QRCData
+      - QRCDataForBank
+      - OPKCQRCData
+  - name: OperationApi
+    tags:
+      - TransactionData
