@@ -1,6 +1,5 @@
 package org.openapi4j.operation.validator.adapters.server.okhttp3;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openapi4j.core.exception.ResolutionException;
 import org.openapi4j.core.validation.ValidationException;
@@ -14,7 +13,6 @@ import org.openapi4j.parser.model.v3.Path;
 import org.openapi4j.schema.validator.ValidationData;
 
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,15 +39,6 @@ public class DeleteMe {
 
     System.out.println(validationData.results());
     assertTrue(validationData.isValid());
-  }
-
-  @Test
-  void kek() throws ResolutionException, ValidationException {
-    URL specPath = DeleteMe.class.getResource("/openapi_test.yaml");
-    OpenApi3 api = new OpenApi3Parser().parse(specPath, false);
-
-    Map<String, Path> paths = api.getPaths();
-    System.out.println(paths);
   }
 
   private OperationValidator loadOperationValidator(String path, String opId) throws Exception {
